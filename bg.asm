@@ -109,7 +109,7 @@ ButtonsDone:
     LDA moving?         ;we need to check if we're moving again here,
                         ;as we don't know if we jumped here from the IfMoving check,
                         ;or continued onto here after testing buttons,
-                        ;the act of which may have caused moving to be set to true from false
+                        ;the act of which may have caused moving to be set from false to true
     BEQ EndMain         ;if not moving, we're done, wait for NMI and go around again
     JSR MovePlayer      ;otherwise, move the player
 
