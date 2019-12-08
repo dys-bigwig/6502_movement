@@ -73,6 +73,12 @@ LoadBackgroundLoop:
     LDA #%00011110   ; enable sprites, enable background, no clipping on left side
     STA $2001
 
+InitPlayerPos:
+    LDA #$80
+    STA player_y
+    LDA #$80
+    STA player_x
+
 WaitNMI:
     LDA nmi_counter
   - CMP nmi_counter
@@ -85,7 +91,6 @@ IfMoving:
     BNE ButtonsDone
 
 TestDirections:
-
     LDA buttons
     AND #%00001111
     BEQ ButtonsDone ;no directions pressed
@@ -106,6 +111,8 @@ ButtonsDone:
 EndMain:
     LDA player_x
     STA $0203
+    LDA player_y
+    STA $0200
     JMP WaitNMI
 
 
@@ -126,7 +133,7 @@ IfRight:
 IfLeft:
     LDA direction
     AND #%00000010
-    BEQ CheckAlignment
+    BEQ IfDown
 
     LDA player_x_sub
     SEC
@@ -135,15 +142,41 @@ IfLeft:
     BCS CheckAlignment
     DEC player_x
 
-MoveDone:
+IfDown:
+    LDA direction
+    AND #%00000100
+    BEQ IfUp
+
+    LDA player_y_sub
+    CLC
+    ADC #$4A
+    STA player_y_sub
+    BCC CheckAlignment
+    INC player_y
+
+IfUp:
+    LDA direction
+    AND #%00001000
+    BEQ CheckAlignment
+
+    LDA player_y_sub
+    SEC
+    SBC #$4A
+    STA player_y_sub
+    BCS CheckAlignment
+    DEC player_y
+
 CheckAlignment:
     LDA player_x
     AND #$07
-    BNE Done         ;not aligned with grid yet, stay in moving state for next frame
+    BNE MoveDone         ;not aligned with grid yet, stay in moving state for next frame
+    LDA player_y
+    AND #$07
+    BNE MoveDone
     LDA #$00
     STA moving?
 
-Done:
+MoveDone:
     RTS
 
 ;;;;;;;;;
