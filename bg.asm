@@ -130,6 +130,8 @@ IfRight:
     STA player_x_sub    
     BCC MoveDone        ;if the carry was set, that means after addition the fractional part was >= 1
                         ;so we need to increment the number before the decimal point
+                        ;otherwise, jump to end as moving? cannot possible change if
+                        ;the integer part of player_x is unchanged
     INC player_x
     JMP CheckAlignment
 
