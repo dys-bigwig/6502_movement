@@ -244,8 +244,8 @@ ReadJoy:
 
   .org $E000
 palette:
-  .db $22,$29,$1A,$0F,  $22,$36,$17,$0F,  $22,$30,$21,$0F,  $22,$27,$17,$0F   ;;background palette
-  .db $22,$1C,$15,$14,  $22,$02,$38,$3C,  $22,$1C,$15,$14,  $22,$02,$38,$3C   ;;sprite palette
+  .db $22,$29,$1A,$0F,  $22,$36,$17,$0F,  $22,$30,$21,$0F,  $22,$27,$17,$0F   ;background palette
+  .db $22,$1C,$15,$14,  $22,$02,$38,$3C,  $22,$1C,$15,$14,  $22,$02,$38,$3C   ;sprite palette
 
 sprites:
      ;vert tile attr horiz
@@ -260,13 +260,11 @@ attribute:
   .db %00000000, %00000000, %00000000, %00000000, %00000000, %00000000, %00000000, %00000000
   .db %00000000, %00000000, %00000000, %00000000, %00000000, %00000000, %00000000, %00000000
 
-  .org $FFFA     ;first of the three vectors starts here
-  .dw NMI        ;when an NMI happens (once per frame if enabled) the 
-                   ;processor will jump to the label NMI:
-  .dw RESET      ;when the processor first turns on or is reset, it will jump
-                   ;to the label RESET:
-  .dw 0          ;external interrupt IRQ is not used in this tutorial
+  .org $FFFA
+  .dw NMI
+  .dw RESET
+  .dw 0
 
 ;;;;;;;;;;;;;;  
 
-  .incbin "bg.chr"   ;includes 8KB graphics file from SMB1
+  .incbin "bg.chr"   ;includes 8KB graphics file
