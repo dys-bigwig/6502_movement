@@ -1,4 +1,4 @@
-;- 6-
+;- RPG walk
 include header.asm
 
 ;- defines -
@@ -78,6 +78,8 @@ InitPlayerPos:
     STA player_y
     LDA #$80
     STA player_x
+
+; - actual game loop start here -
 
 WaitNMI:
     LDA nmi_counter
@@ -244,8 +246,8 @@ ReadJoy:
 
   .org $E000
 palette:
-  .db $22,$29,$1A,$0F,  $22,$36,$17,$0F,  $22,$30,$21,$0F,  $22,$27,$17,$0F   ;background palette
-  .db $22,$1C,$15,$14,  $22,$02,$38,$3C,  $22,$1C,$15,$14,  $22,$02,$38,$3C   ;sprite palette
+  .db $22,$29,$1A,$0F,  $22,$36,$17,$0F,  $22,$30,$21,$0F,  $22,$27,$17,$0F   ;;background palette
+  .db $22,$1C,$15,$14,  $22,$02,$38,$3C,  $22,$1C,$15,$14,  $22,$02,$38,$3C   ;;sprite palette
 
 sprites:
      ;vert tile attr horiz
@@ -263,8 +265,8 @@ attribute:
   .org $FFFA
   .dw NMI
   .dw RESET
-  .dw 0
+  .dw 0 
 
 ;;;;;;;;;;;;;;  
 
-  .incbin "bg.chr"   ;includes 8KB graphics file
+  .incbin "bg.chr"   ;includes 8KB graphics file from SMB1
