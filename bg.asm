@@ -14,23 +14,18 @@ include reset.asm
 ; - load first screen ;
 
 LoadPalettes:
-    LDA $2002             ; read PPU status to reset the high/low latch
+    LDA $2002 
     LDA #$3F
-    STA $2006             ; write the high byte of $3F00 address
+    STA $2006 
     LDA #$00
-    STA $2006             ; write the low byte of $3F00 address
-    LDX #$00              ; start out at 0
+    STA $2006 
+    LDX #$00 
 LoadPalettesLoop:
-    LDA palette, x        ; load data from address (palette + the value in x)
-                          ; 1st time through loop it will load palette+0
-                          ; 2nd time through loop it will load palette+1
-                          ; 3rd time through loop it will load palette+2
-                          ; etc
-    STA $2007             ; write to PPU
-    INX                   ; X = X + 1
-    CPX #$20              ; Compare X to hex $10, decimal 16 - copying 16 bytes = 4 sprites
-    BNE LoadPalettesLoop  ; Branch to LoadPalettesLoop if compare was Not Equal to zero
-                          ; if compare was equal to 32, keep going down
+    LDA palette, x 
+    STA $2007 
+    INX 
+    CPX #$20 
+    BNE LoadPalettesLoop 
 
 LoadSprites:
     LDX #$00              ; start at 0
@@ -94,7 +89,7 @@ IfMoving:
 
 TestDirections:
     LDA buttons
-    AND #%00001111      ;is U D L or R pressed?
+    AND DIRECTIONAL_BUTTONS      ;is U D L or R pressed?
     BEQ ButtonsDone     ;if not, we're done checking buttons
 
     STA direction       ;otherwise, store the button as the current direction
@@ -109,7 +104,7 @@ ButtonsDone:
     LDA moving?         ;we need to check if we're moving again here,
                         ;as we don't know if we jumped here from the IfMoving check,
                         ;or continued onto here after testing buttons,
-                        ;the act of which may have caused moving to be set from false to true
+                        ;the act of which may have caused moving to be set to true from false
     BEQ EndMain         ;if not moving, we're done, wait for NMI and go around again
     JSR MovePlayer      ;otherwise, move the player
 
@@ -123,9 +118,9 @@ EndMain:
 
 
 MovePlayer:
+    LDA direction       ;this is set by the button/direction checking code above
 
 IfRight:
-    LDA direction       ;this is set by the button/direction checking code above
     AND #%00000001      ;is it right? (ABSSUDLR)
     BEQ IfLeft          ;if no, see if it was left
 
@@ -133,9 +128,10 @@ IfRight:
     CLC                 ;clear carry before ADC
     ADC #$4A            ;add 74 ($4A in hex) to the fractional part of player_x
     STA player_x_sub    
-    BCC CheckAlignment  ;if the carry was set, that means after addition the fractional part was >= 1
+    BCC MoveDone        ;if the carry was set, that means after addition the fractional part was >= 1
                         ;so we need to increment the number before the decimal point
     INC player_x
+    JMP CheckAlignment
 
 IfLeft:
     LDA direction
@@ -146,8 +142,9 @@ IfLeft:
     SEC
     SBC #$4A
     STA player_x_sub
-    BCS CheckAlignment
+    BCS MoveDone
     DEC player_x
+    JMP CheckAlignment
 
 IfDown:
     LDA direction
@@ -158,19 +155,16 @@ IfDown:
     CLC
     ADC #$4A
     STA player_y_sub
-    BCC CheckAlignment
+    BCC MoveDone
     INC player_y
+    JMP CheckAlignment
 
 IfUp:
-    LDA direction
-    AND #%00001000
-    BEQ CheckAlignment
-
     LDA player_y_sub
     SEC
     SBC #$4A
     STA player_y_sub
-    BCS CheckAlignment
+    BCS MoveDone
     DEC player_y
 
 CheckAlignment:
