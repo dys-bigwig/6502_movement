@@ -88,46 +88,51 @@ Main:
     JSR ReadJoy
 IfMoving:
     LDA moving?
-    BNE ButtonsDone
+    BNE ButtonsDone     ;if we're already moving, ignore player input
 
 TestDirections:
     LDA buttons
-    AND #%00001111
-    BEQ ButtonsDone ;no directions pressed
+    AND #%00001111      ;is U D L or R pressed?
+    BEQ ButtonsDone     ;if not, we're done checking buttons
 
-    STA direction
-    SEC
-    SBC #$01
-    AND direction
-    BNE ButtonsDone
+    STA direction       ;otherwise, store the button as the current direction
+    SEC             
+    SBC #$01            ;A AND (A - 1) is the same as ensuring only one bit is set
+    AND direction       ;this is to prevent multiple directions/diagonal movement
+    BNE ButtonsDone     ;if A is not zero, more than one direction is pressed, so we do nothing and skip ahead
     LDA #$01
-    STA moving?
+    STA moving?         ;otherwise, we set moving to true (1 = true, 0 = false)
 
 ButtonsDone:
-    LDA moving?
-    BEQ EndMain
-    JSR MovePlayer
+    LDA moving?         ;we need to check if we're moving again here,
+                        ;as we don't know if we jumped here from the IfMoving check,
+                        ;or continued onto here after testing buttons,
+                        ;the act of which may have caused moving to be set to true from false
+    BEQ EndMain         ;if not moving, we're done, wait for NMI and go around again
+    JSR MovePlayer      ;otherwise, move the player
 
 EndMain:
     LDA player_x
-    STA $0203
+    STA $0203           ;0203 is the location of the x_position of the
+                        ;sprite which represents the player
     LDA player_y
-    STA $0200
-    JMP WaitNMI
+    STA $0200           ;ditto above for y
+    JMP WaitNMI         ;from the top!
 
 
 MovePlayer:
 
 IfRight:
-    LDA direction
-    AND #%00000001
-    BEQ IfLeft
+    LDA direction       ;this is set by the button/direction checking code above
+    AND #%00000001      ;is it right? (ABSSUDLR)
+    BEQ IfLeft          ;if no, see if it was left
 
-    LDA player_x_sub
-    CLC
-    ADC #$4A
-    STA player_x_sub
-    BCC CheckAlignment
+    LDA player_x_sub    ;if yes, get the numbers after the decimal point from player_x
+    CLC                 ;clear carry before ADC
+    ADC #$4A            ;add 74 ($4A in hex) to the fractional part of player_x
+    STA player_x_sub    
+    BCC CheckAlignment  ;if the carry was set, that means after addition the fractional part was >= 1
+                        ;so we need to increment the number before the decimal point
     INC player_x
 
 IfLeft:
@@ -167,14 +172,20 @@ IfUp:
     DEC player_y
 
 CheckAlignment:
-    LDA player_x
-    AND #$07
-    BNE MoveDone         ;not aligned with grid yet, stay in moving state for next frame
-    LDA player_y
+    LDA player_x        ;if we AND player_x with player_x - 1
+    AND #$07            ;that's equivalent to checking if it's evenly divisible by 8
+                        ;which allows us to check whether we're aligned with the grid
+                        ;as the grid tiles are 8x8 pixels in size
+
+    BNE MoveDone        ;if A is not 0 after the above AND, 
+                        ;we're not yet aligned with grid, so stay in moving state for next frame
+
+    LDA player_y        ;ditto above for y
     AND #$07
     BNE MoveDone
-    LDA #$00
-    STA moving?
+
+    LDA #$00            ;if we get here, that means we're aligned,
+    STA moving?         ;so set moving to false (0) as one full tile movement is complete
 
 MoveDone:
     RTS
