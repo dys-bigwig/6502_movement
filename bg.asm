@@ -89,7 +89,7 @@ IfMoving:
 
 TestDirections:
     LDA buttons
-    AND DIRECTIONAL_BUTTONS      ;is U D L or R pressed?
+    AND #DIRECTIONAL_BUTTONS      ;is U D L or R pressed?
     BEQ ButtonsDone     ;if not, we're done checking buttons
 
     STA direction       ;otherwise, store the button as the current direction
@@ -121,8 +121,8 @@ MovePlayer:
     LDA direction       ;this is set by the button/direction checking code above
 
 IfRight:
-    AND #%00000001      ;is it right? (ABSSUDLR)
-    BEQ IfLeft          ;if no, see if it was left
+    LSR
+    BCC IfLeft          ;if no, see if it was left
 
     LDA player_x_sub    ;if yes, get the numbers after the decimal point from player_x
     CLC                 ;clear carry before ADC
@@ -136,9 +136,8 @@ IfRight:
     JMP CheckAlignment
 
 IfLeft:
-    LDA direction
-    AND #%00000010
-    BEQ IfDown
+    LSR
+    BCC IfDown
 
     LDA player_x_sub
     SEC
@@ -149,9 +148,8 @@ IfLeft:
     JMP CheckAlignment
 
 IfDown:
-    LDA direction
-    AND #%00000100
-    BEQ IfUp
+    LSR
+    BCC IfUp
 
     LDA player_y_sub
     CLC
@@ -162,7 +160,9 @@ IfDown:
     JMP CheckAlignment
 
 IfUp:
-    LDA player_y_sub
+    LDA player_y_sub    ;if we reach here, we know that none of the other directions
+                        ;were pressed, so it must have been up.
+                        ;Therefore, we needn't check as we did with the others.
     SEC
     SBC #$4A
     STA player_y_sub
@@ -191,9 +191,10 @@ MoveDone:
 ;;;;;;;;;
 
 NMI:
+    PushRegs
+
     INC nmi_counter
     
-    PushRegs
 
     LDA #$00
     STA $2003       ; set the low byte (00) of the RAM address
